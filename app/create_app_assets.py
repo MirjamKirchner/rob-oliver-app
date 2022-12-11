@@ -1,6 +1,4 @@
-import os
 import pandas as pd
-import numpy as np
 import datetime
 import boto3
 import botocore
@@ -10,11 +8,13 @@ S3_BUCKET = "rob-oliver"
 KEY = "data/deployment/rob.csv"
 
 
-def _load_rob():
+def _load_rob() -> pd.DataFrame:
     """
     Loads the data to be displayed in the app.
-    :return: (pd.DataFrame) a data frame containing information about seals admitted to the Seehundstation
-    Friedrichskoog
+
+    Returns
+    -------
+    A `pandas DataFrame` containing information about seals admitted to the Seehundstation Friedrichskoog
     """
     try:
         # The S3-bucket grants read rights to the public, so we do not need to provide credentials
@@ -33,6 +33,7 @@ def _load_rob():
                 f" exist."
             )
         else:
+            print("An unexpected exception has occurred.")
             print(error)
         raise
     except:
@@ -40,23 +41,9 @@ def _load_rob():
         raise
     else:
         df_rob[
-            [
-                "Long",
-                "Lat",
-                "Einlieferungsdatum",
-                "Erstellt_am",
-                "Sys_aktualisiert_am",
-                "Sys_geloescht",
-            ]
+            ["Long", "Lat", "Einlieferungsdatum", "Erstellt_am", "Sys_aktualisiert_am"]
         ] = df_rob[
-            [
-                "Long",
-                "Lat",
-                "Einlieferungsdatum",
-                "Erstellt_am",
-                "Sys_aktualisiert_am",
-                "Sys_geloescht",
-            ]
+            ["Long", "Lat", "Einlieferungsdatum", "Erstellt_am", "Sys_aktualisiert_am"]
         ].astype(
             {
                 "Long": "float64",
@@ -64,10 +51,9 @@ def _load_rob():
                 "Einlieferungsdatum": "datetime64[ns]",
                 "Erstellt_am": "datetime64[ns]",
                 "Sys_aktualisiert_am": "datetime64[ns]",
-                "Sys_geloescht": "int32",
             }
         )
-        return df_rob
+        return df_rob[df_rob["Fundort"] != "Unknown"]
 
 
 DF_ROB = _load_rob()
@@ -80,16 +66,25 @@ def create_part_to_whole(
     """
     Computes the parts to whole of seals in rehabilitation, released, and died within the time range
     [min_date, max_date).
-    :param max_date: (datetime) maximal date
-    :param min_date: (datetime) minial date
-    :return: (pd.DataFrame) temporally filtered parts to whole (in rehabilitation, released, died)
+
+    Parameters
+    ----------
+    max_date
+        maximal date.
+
+    min_date
+        minimal date.
+
+    Returns
+    -------
+    A `pandas DataFrame` describing temporally filtered parts to whole (in rehabilitation, released, died).
     """
     df_time_slice = DF_ROB.loc[
         (DF_ROB["Einlieferungsdatum"] >= min_date) & (DF_ROB["Erstellt_am"] < max_date),
-        ["Erstellt_am", "Sys_id", "Sys_geloescht"],
+        ["Erstellt_am", "Sys_id"],
     ]
     df_latest_by_id = (
-        df_time_slice.set_index(pd.DatetimeIndex(df_time_slice["Erstellt_am"]))
+        df_time_slice.sort_values(by=["Sys_id", "Erstellt_am"])
         .groupby(["Sys_id"])
         .last()
     )
@@ -97,7 +92,7 @@ def create_part_to_whole(
         df_latest_by_id,
         DF_ROB,
         how="left",
-        on=["Erstellt_am", "Sys_id", "Sys_geloescht"],
+        on=["Erstellt_am", "Sys_id"],
     )["Aktuell"].value_counts()
 
 
@@ -108,9 +103,18 @@ def create_time_series(
     """
     Computes the weekly count of seals admitted to the Seehundstation Friedsrichskoog within the time range
     [min_date, max_date).
-    :param max_date: (datetime) maximal date
-    :param min_date: (datetime) minial date
-    :return: (pd.DataFrame) temporally filtered time series of weekly counts of admitted seals
+
+    Parameters
+    ----------
+    max_date
+        maximal date.
+
+    min_date
+        minial date.
+
+    Returns
+    -------
+    A `pandas DataFrame` describing temporally filtered time series of weekly counts of admitted seals.
     """
     df_time_series = (
         DF_ROB[["Sys_id", "Einlieferungsdatum", "Tierart"]]
@@ -137,9 +141,18 @@ def create_bubbles(
     """
     Computes the count of seals admitted to the Seehundstation Friedrichskoog for different finding places within the
     time range [min_date, max_date).
-    :param max_date: (datetime) maximal date
-    :param min_date: (datetime) minial date
-    :return: (pd.DataFrame) temporally filtered counts of admitted seals for different finding places
+
+    Parameters
+    ----------
+    max_date
+        maximal date.
+
+    min_date
+        minimal date.
+
+    Returns
+    -------
+    A `pandas DataFrame` describing temporally filtered counts of admitted seals for different finding places.
     """
     df_bubbles = DF_ROB[["Sys_id", "Einlieferungsdatum", "Fundort", "Long", "Lat"]]
     df_bubbles = df_bubbles[
@@ -152,30 +165,8 @@ def create_bubbles(
         .count()
         .reset_index()
         .rename(columns={"Sys_id": "Anzahl"})
-    )  # Some animals have an unkown finding place. Therefore, the total count here is below the actual.
-    return df_bubbles
-
-
-def get_marks(min_date, max_date):
-    """
-    Convert DateTimeIndex to a dict that maps epoch to str
-    :param min_date: (int) minimal epoch
-    :param max_date: (int) maximal epoch
-    :return: (dict) format is {
-            1270080000: "04-2010",
-            1235865600: "03-2009",
-             ...
-        }
-    """
-    months = (
-        pd.date_range(min_date, max_date, freq="MS")
-        .to_period("M")
-        .unique()
-        .sort_values()
     )
-    epochs = months.to_timestamp().astype(np.int64) // 10**9
-    strings = months.strftime("%m-%Y")
-    return dict(zip(epochs, strings))
+    return df_bubbles
 
 
 if __name__ == "__main__":

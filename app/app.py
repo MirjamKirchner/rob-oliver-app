@@ -8,11 +8,11 @@ import pandas as pd
 import plotly.io as pio
 from datetime import datetime
 from dash import Dash, html, dcc, Input, Output
+from datetime import date
 from create_app_assets import (
     create_part_to_whole,
     create_time_series,
     create_bubbles,
-    get_marks,
     DF_ROB,
 )
 
@@ -114,9 +114,31 @@ app.layout = html.Div(
                                                                                 "color": "#7DCE13"
                                                                             },
                                                                         ),
-                                                                        " Robben  im Zeitraum ",
+                                                                        " Robben  im Zeitraum: ",
                                                                         html.A(
-                                                                            id="val-date-range"
+                                                                            dcc.DatePickerRange(
+                                                                                id="date-picker",
+                                                                                start_date_placeholder_text="Start Period",
+                                                                                end_date_placeholder_text="End Period",
+                                                                                calendar_orientation="vertical",
+                                                                                start_date=pd.Timestamp(
+                                                                                    DF_ROB[
+                                                                                        "Einlieferungsdatum"
+                                                                                    ].min()
+                                                                                    - pd.Timedelta(
+                                                                                        days=14
+                                                                                    )
+                                                                                ).date(),
+                                                                                end_date=pd.Timestamp(
+                                                                                    DF_ROB[
+                                                                                        "Erstellt_am"
+                                                                                    ].max()
+                                                                                    + pd.Timedelta(
+                                                                                        days=14
+                                                                                    )
+                                                                                ).date(),
+                                                                                display_format="D.M.Y",
+                                                                            )
                                                                         ),
                                                                         html.Br(),
                                                                         "Unter diesem Text siehst du eine Karte, in der die ungefähren Fundorte der eingelieferten Robben "
@@ -127,10 +149,8 @@ app.layout = html.Div(
                                                                 ),
                                                                 html.P(
                                                                     [
-                                                                        "Zusätzlich findest du am Ende dieser Seite einen Zeitstrahl, der anzeigt für welchen Zeitraum Informationen"
-                                                                        " in den Grafiken dargestellt werden. Wenn du ein bestimmtest Zeitfenster genauer betrachten möchtest,"
-                                                                        " musst du nur den linken und rechten Kreis verschieben, um den Start- bzw. den Endzeitpunkt "
-                                                                        "anzupassen.",
+                                                                        "Wenn du ein bestimmtest Zeitfenster genauer betrachten möchtest,"
+                                                                        " musst du nur die obigen Daten anpassen, um den Start- bzw. den Endzeitpunkt anzupassen.",
                                                                         html.Br(),
                                                                         "Probier es doch mal aus 😄 Viel Spaß! ",
                                                                         html.A(
@@ -168,38 +188,6 @@ app.layout = html.Div(
                                     ),
                                     html.Div(dcc.Graph(id="fig-bubbles")),
                                     html.Div(dcc.Graph(id="fig-time-series")),
-                                    html.Div(
-                                        dcc.RangeSlider(
-                                            allowCross=False,
-                                            id="date-slider",
-                                            min=pd.Timestamp(
-                                                DF_ROB["Einlieferungsdatum"].min()
-                                                - pd.Timedelta(days=14)
-                                            ).timestamp(),
-                                            max=pd.Timestamp(
-                                                DF_ROB["Erstellt_am"].max()
-                                                + pd.Timedelta(days=14)
-                                            ).timestamp(),
-                                            marks=get_marks(
-                                                pd.Timestamp(
-                                                    DF_ROB["Einlieferungsdatum"].min()
-                                                ),
-                                                pd.Timestamp(
-                                                    DF_ROB["Erstellt_am"].max()
-                                                ),
-                                            ),
-                                            value=[
-                                                pd.Timestamp(
-                                                    DF_ROB["Einlieferungsdatum"].min()
-                                                    - pd.Timedelta(days=14)
-                                                ).timestamp(),
-                                                pd.Timestamp(
-                                                    DF_ROB["Erstellt_am"].max()
-                                                    + pd.Timedelta(days=14)
-                                                ).timestamp(),
-                                            ],
-                                        )
-                                    ),
                                 ]
                             )
                         ],
@@ -214,17 +202,31 @@ app.layout = html.Div(
 )
 
 
-@app.callback(Output("fig-part-to-whole", "figure"), Input("date-slider", "value"))
-def update_fig_part_to_whole(selected_range):
+@app.callback(
+    Output("fig-part-to-whole", "figure"),
+    Input("date-picker", "start_date"),
+    Input("date-picker", "end_date"),
+)
+def update_fig_part_to_whole(start_date: str, end_date: str) -> go.Figure:
     """
     Updates the donut chart displaying the fraction of animals in rehabilitation, released, and dead based on the
     selected date range.
-    :param selected_range: (Tuple(int, int)) a pair of epochs
-    :return: (plotly.graph_objects.Figure) a donut chart
+
+    Parameters
+    ----------
+    start_date
+        Start date of the considered time period.
+
+    end_date
+        End date of the considered time period.
+
+    Returns
+    -------
+        A `plotly.graph_objects`-figure describing a donut chart.
     """
-    min_date = datetime.fromtimestamp(selected_range[0])
-    max_date = datetime.fromtimestamp(selected_range[1])
-    ds_part_to_whole = create_part_to_whole(max_date=max_date, min_date=min_date)
+    min_date = pd.to_datetime(start_date, format="%Y-%m-%d")
+    max_date = pd.to_datetime(end_date, format="%Y-%m-%d")
+    ds_part_to_whole = create_part_to_whole(min_date=min_date, max_date=max_date)
 
     fig_part_to_whole = go.Figure(
         data=[
@@ -261,16 +263,30 @@ def update_fig_part_to_whole(selected_range):
     return fig_part_to_whole
 
 
-@app.callback(Output("fig-bubbles", "figure"), Input("date-slider", "value"))
-def update_fig_bubbles(selected_range):
+@app.callback(
+    Output("fig-bubbles", "figure"),
+    Input("date-picker", "start_date"),
+    Input("date-picker", "end_date"),
+)
+def update_fig_bubbles(start_date: str, end_date: str) -> go.Figure:
     """
     Updates the bubble chart displaying the count of seals at different finding places and the location of the
     Seehundstation Friedrichskoog based on the selected date range.
-    :param selected_range: (Tuple(int, int)) a pair of epochs
-    :return: (plotly.graph_objects.Figure) a bubble chart
+
+    Parameters
+    ----------
+    start_date
+        Start date of the considered time period.
+
+    end_date
+        End date of the considered time period.
+
+    Returns
+    -------
+    A `plotly.graph_objects`-figure describing a bubble chart.
     """
-    min_date = datetime.fromtimestamp(selected_range[0])
-    max_date = datetime.fromtimestamp(selected_range[1])
+    min_date = pd.to_datetime(start_date, format="%Y-%m-%d")
+    max_date = pd.to_datetime(end_date, format="%Y-%m-%d")
     df_bubbles = create_bubbles(max_date=max_date, min_date=min_date)
 
     fig_bubbles = go.Figure()
@@ -335,24 +351,38 @@ def update_fig_bubbles(selected_range):
     return fig_bubbles
 
 
-@app.callback(Output("fig-time-series", "figure"), Input("date-slider", "value"))
-def update_fig_time_series(selected_range):
+@app.callback(
+    Output("fig-time-series", "figure"),
+    Input("date-picker", "start_date"),
+    Input("date-picker", "end_date"),
+)
+def update_fig_time_series(start_date: str, end_date: str) -> px.line:
     """
     Updates the time-series chart displaying the count of animals admitted to the Seehundstation Friedrichskoog based on
     the selected date range.
-    :param selected_range: (Tuple(int, int)) a pair of epochs
-    :return: (plotly.graph_objects.Figure) a time-series chart
+
+    Parameters
+    ----------
+    start_date
+        Start date of the considered time period.
+
+    end_date
+        End date of the considered time period.
+
+    Returns
+    -------
+    A `plotly.express.line`-figure describing a a time-series chart.
     """
-    min_date = datetime.fromtimestamp(selected_range[0])
-    max_date = datetime.fromtimestamp(selected_range[1])
-    df_time_series_slider = create_time_series(max_date=max_date, min_date=min_date)
+    min_date = pd.to_datetime(start_date, format="%Y-%m-%d")
+    max_date = pd.to_datetime(end_date, format="%Y-%m-%d")
+    df_time_series_range = create_time_series(max_date=max_date, min_date=min_date)
     color_discrete_map = {
         "Seehund": "#086E7D",
         "Kegelrobbe": "#34BE82",
         "sonstige": "#DC434A",
     }
     fig_time_series = px.line(
-        df_time_series_slider,
+        df_time_series_range,
         x="Einlieferungswoche",
         y="Anzahl",
         color="Tierart",
@@ -365,18 +395,6 @@ def update_fig_time_series(selected_range):
         plot_bgcolor="rgba(0, 0, 0, 0)",
     )
     return fig_time_series
-
-
-@app.callback(Output("val-date-range", "children"), Input("date-slider", "value"))
-def update_date_range(selected_range):
-    """
-    Returns the selected date range as string to be displayed within the written explanations of the dash board.
-    :param selected_range: (Tuple(int, int)) a pair of epochs
-    :return: (string) the selected date range
-    """
-    min_date = datetime.fromtimestamp(selected_range[0]).strftime("%d.%m.%Y")
-    max_date = datetime.fromtimestamp(selected_range[1]).strftime("%d.%m.%Y")
-    return "{} - {}.".format(min_date, max_date)
 
 
 if __name__ == "__main__":
