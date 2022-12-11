@@ -771,24 +771,16 @@ body {
   padding: 0;
 }
 
-.rc-slider-track {
-  background-color: #555555;
+.DateRangePickerInput{
+  border: 0px;
+  background-color: transparent;
 }
 
-.rc-slider-dot-active {
-  border-color: #555555;
-  border: solid 2px #555555;
-}
-
-.rc-slider-handle {
-  background-color: #555555;
-  border-color: #555555;
-}
-
-.rc-slider-handle:hover {
-  border-color: #555555;
-}
-
-.rc-slider-handle-active:active {
-  border-color: #555555;
+/* Fix the font size and other stuff of datepicker*/
+.DateInput_input, .DateInput_input_1 {
+  /* default flatly stuff */
+  text-align: center;
+  color: #0d6efd;
+  background-color: #e9e2d8;
+  border: 0px;
 }
