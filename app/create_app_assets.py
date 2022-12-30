@@ -3,6 +3,7 @@ import datetime
 import boto3
 import botocore
 import io
+from datetime import datetime
 
 S3_BUCKET = "rob-oliver"
 KEY = "data/deployment/rob.csv"
@@ -40,19 +41,16 @@ def _load_rob() -> pd.DataFrame:
         print("An unexpected exception has occurred.")
         raise
     else:
-        df_rob[
-            ["Long", "Lat", "Einlieferungsdatum", "Erstellt_am", "Sys_aktualisiert_am"]
-        ] = df_rob[
-            ["Long", "Lat", "Einlieferungsdatum", "Erstellt_am", "Sys_aktualisiert_am"]
-        ].astype(
+        df_rob = df_rob.astype(
             {
                 "Long": "float64",
                 "Lat": "float64",
-                "Einlieferungsdatum": "datetime64[ns]",
                 "Erstellt_am": "datetime64[ns]",
                 "Sys_aktualisiert_am": "datetime64[ns]",
+                "Einlieferungsdatum": "datetime64[ns]",
             }
         )
+
         return df_rob[df_rob["Fundort"] != "Unknown"]
 
 
