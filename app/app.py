@@ -30,7 +30,16 @@ app = Dash(
 
 app.layout = html.Div(
     [
-        html.Img(src="/static/img/Seehundheader2.png", style={"width": "100%"}),
+        html.A(
+            href="https://unsplash.com/@hen63",
+            children=[
+                html.Img(
+                    src="/static/img/Seehundheader2.png",
+                    alt="A cute baby seal",
+                    style={"width": "100%"},
+                )
+            ],
+        ),
         html.Div(
             [
                 html.Small(
@@ -97,21 +106,21 @@ app.layout = html.Div(
                                                                         html.A(
                                                                             children=" in Reha befindlichen",
                                                                             style={
-                                                                                "color": "#2B7A0B"
+                                                                                "color": "#94613d"
                                                                             },
                                                                         ),
                                                                         ", ",
                                                                         html.A(
                                                                             children="ausgewilderten",
                                                                             style={
-                                                                                "color": "#5BB318"
+                                                                                "color": "#3d8c18"
                                                                             },
                                                                         ),
                                                                         " und ",
                                                                         html.A(
                                                                             children="verstorbenen",
                                                                             style={
-                                                                                "color": "#7DCE13"
+                                                                                "color": "#101a1c"
                                                                             },
                                                                         ),
                                                                         " Robben  im Zeitraum: ",
@@ -149,7 +158,7 @@ app.layout = html.Div(
                                                                 ),
                                                                 html.P(
                                                                     [
-                                                                        "Wenn du ein bestimmtest Zeitfenster genauer betrachten möchtest,"
+                                                                        "Wenn du ein bestimmtes Zeitfenster genauer betrachten möchtest,"
                                                                         " musst du nur die obigen Daten anpassen, um den Start- bzw. den Endzeitpunkt anzupassen.",
                                                                         html.Br(),
                                                                         "Probier es doch mal aus 😄 Viel Spaß! ",
@@ -234,7 +243,7 @@ def update_fig_part_to_whole(start_date: str, end_date: str) -> go.Figure:
                 labels=ds_part_to_whole.index,
                 values=ds_part_to_whole.values,
                 hole=0.4,
-                marker_colors=["#5BB318", "#7DCE13", "#2B7A0B"],
+                marker_colors=["#3d8c18", "#101a1c", "#94613d"],
             )
         ]
     )
