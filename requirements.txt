@@ -1,6 +1,6 @@
 plotly==5.11.0
 pandas==1.5.1
 dash==2.7.0
-numpy==1.23.4
 boto3==1.26.19
 botocore==1.29.19
+dash-bootstrap-components==1.2.1
