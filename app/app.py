@@ -159,7 +159,7 @@ app.layout = html.Div(
                                                                 html.P(
                                                                     [
                                                                         "Wenn du ein bestimmtes Zeitfenster genauer betrachten möchtest,"
-                                                                        " musst du nur die obigen Daten anpassen, um den Start- bzw. den Endzeitpunkt anzupassen.",
+                                                                        " musst du nur die obigen Daten anpassen, um den Start- bzw. den Endzeitpunkt zu verändern.",
                                                                         html.Br(),
                                                                         "Probier es doch mal aus 😄 Viel Spaß! ",
                                                                         html.A(
