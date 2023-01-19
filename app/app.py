@@ -243,7 +243,7 @@ def update_fig_part_to_whole(start_date: str, end_date: str) -> go.Figure:
                 labels=ds_part_to_whole.index,
                 values=ds_part_to_whole.values,
                 hole=0.4,
-                marker_colors=["#3d8c18", "#101a1c", "#94613d"],
+                marker_colors=["#3d8c18", "#94613d", "#101a1c"],  # released, in rehabilitation, deceased
             )
         ]
     )
