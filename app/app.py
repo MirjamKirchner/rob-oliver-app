@@ -6,9 +6,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.io as pio
-from datetime import datetime
 from dash import Dash, html, dcc, Input, Output
-from datetime import date
 from create_app_assets import (
     create_part_to_whole,
     create_time_series,
@@ -243,7 +241,11 @@ def update_fig_part_to_whole(start_date: str, end_date: str) -> go.Figure:
                 labels=ds_part_to_whole.index,
                 values=ds_part_to_whole.values,
                 hole=0.4,
-                marker_colors=["#3d8c18", "#94613d", "#101a1c"],  # released, in rehabilitation, deceased
+                marker_colors=[
+                    "#3d8c18",
+                    "#94613d",
+                    "#101a1c",
+                ],  # released, in rehabilitation, deceased
             )
         ]
     )
@@ -380,7 +382,7 @@ def update_fig_time_series(start_date: str, end_date: str) -> px.line:
 
     Returns
     -------
-    A `plotly.express.line`-figure describing a a time-series chart.
+    A `plotly.express.line`-figure describing a time-series chart.
     """
     min_date = pd.to_datetime(start_date, format="%Y-%m-%d")
     max_date = pd.to_datetime(end_date, format="%Y-%m-%d")
