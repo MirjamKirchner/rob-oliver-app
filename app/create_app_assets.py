@@ -1,5 +1,4 @@
 import pandas as pd
-import datetime
 import boto3
 import botocore
 import io
@@ -45,13 +44,15 @@ def _load_rob() -> pd.DataFrame:
             {
                 "Long": "float64",
                 "Lat": "float64",
-                "Erstellt_am": "datetime64[ns]",
-                "Sys_aktualisiert_am": "datetime64[ns]",
                 "Einlieferungsdatum": "datetime64[ns]",
             }
         )
+        df_rob = df_rob.assign(
+            Erstellt_am=pd.to_datetime(df_rob["Erstellt_am"]).dt.tz_localize(None),
+            Sys_aktualisiert_am=pd.to_datetime(df_rob["Sys_aktualisiert_am"]).dt.tz_localize(None)
+        )
 
-        return df_rob[df_rob["Fundort"] != "Unknown"]
+        return df_rob
 
 
 DF_ROB = _load_rob()

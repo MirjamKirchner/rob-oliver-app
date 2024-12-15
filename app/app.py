@@ -233,19 +233,22 @@ def update_fig_part_to_whole(start_date: str, end_date: str) -> go.Figure:
     """
     min_date = pd.to_datetime(start_date, format="%Y-%m-%d")
     max_date = pd.to_datetime(end_date, format="%Y-%m-%d")
+
     ds_part_to_whole = create_part_to_whole(min_date=min_date, max_date=max_date)
+    ds_part_to_whole.sort_index(inplace=True)
 
     fig_part_to_whole = go.Figure(
         data=[
             go.Pie(
                 labels=ds_part_to_whole.index,
                 values=ds_part_to_whole.values,
+                sort=False,
                 hole=0.4,
                 marker_colors=[
-                    "#3d8c18",
-                    "#94613d",
-                    "#101a1c",
-                ],  # released, in rehabilitation, deceased
+                    "#3d8c18",  # Ausgewildert/released
+                    "#94613d",  # Reha/in rehabilitation
+                    "#101a1c",  # Verstorben/deceased
+                ],
             )
         ]
     )
@@ -301,6 +304,7 @@ def update_fig_bubbles(start_date: str, end_date: str) -> go.Figure:
     df_bubbles = create_bubbles(max_date=max_date, min_date=min_date)
 
     fig_bubbles = go.Figure()
+
     # finding places
     fig_bubbles.add_trace(
         go.Scattermapbox(
@@ -316,11 +320,11 @@ def update_fig_bubbles(start_date: str, end_date: str) -> go.Figure:
             ),
             text=(
                 pd.Series(["Fundort"] * df_bubbles["Fundort"].size).str.cat(
-                    df_bubbles["Fundort"].astype(str), sep="="
+                    df_bubbles["Fundort"].astype(str), sep=": "
                 )
             ).str.cat(
                 pd.Series(["Anzahl"] * df_bubbles["Anzahl"].size).str.cat(
-                    df_bubbles["Anzahl"].astype(str), sep="="
+                    df_bubbles["Anzahl"].astype(str), sep=": "
                 ),
                 sep="<br>",
             ),
@@ -328,6 +332,7 @@ def update_fig_bubbles(start_date: str, end_date: str) -> go.Figure:
             name="Fundort",
         )
     )
+
     # Seehundstation Friedrichskoog
     fig_bubbles.add_trace(
         go.Scattermapbox(
@@ -335,7 +340,6 @@ def update_fig_bubbles(start_date: str, end_date: str) -> go.Figure:
             lon=[8.876683012541077],
             mode="markers+text",
             marker=go.scattermapbox.Marker(color="#004d9e", size=15),
-            text="Seehundstation Friedrichskoog",
             hoverinfo="text",
             name="Seehundstation",
         )
@@ -343,7 +347,7 @@ def update_fig_bubbles(start_date: str, end_date: str) -> go.Figure:
     # Layout
     fig_bubbles.update_layout(
         mapbox=dict(
-            style="stamen-terrain",  # "open-street-map", "carto-positron", "carto-darkmatter", "stamen-terrain", "stamen-toner" or "stamen-watercolor"
+            style="carto-positron",  # "open-street-map", "white-bg", "carto- positron", "carto-darkmatter"
             zoom=6.5,
             center=dict(lat=54.43388, lon=9.57109),
         ),
